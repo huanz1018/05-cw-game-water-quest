@@ -6,6 +6,9 @@ let spawnInterval;           // Holds the interval for spawning items
 let countdownInterval;       // Holds the interval for the game timer
 let timeLeft = 30;           // Game time in seconds
 let obstacleInterval;        // Interval for spawning obstacles
+let currentGoal = 20;        // Goal to win (differs by difficulty)
+let spawnRate = 1000;       // ms between water can spawns
+let obstacleRate = 3000;    // ms between obstacle spawns
 
 // End-game message arrays
 const winMessages = [
@@ -19,6 +22,17 @@ const loseMessages = [
   'Almost there! Give it another shot!',
   'So close! Practice makes perfect.'
 ];
+
+// Milestone messages: keyed by target (relative or absolute); each has several possible messages
+const milestoneMessages = {
+  0.25: ['Nice start!', 'You got this — keep going!'],
+  0.5: ['Halfway there!', 'You are halfway to the goal!'],
+  0.75: ['Almost there!', 'You can finish strong!'],
+  1.0: ['Goal reached! Great work!']
+};
+
+// Track which milestone fractions have been announced this round
+let announcedMilestones = new Set();
 
 // Creates the 3x3 game grid where items will appear
 function createGrid() {
@@ -65,7 +79,7 @@ function spawnObstacle() {
   if (randomCell.innerHTML.trim() === '') {
     randomCell.innerHTML = `
       <div class="obstacle-wrapper">
-        <div class="obstacle" aria-hidden="true">!</div>
+        <div class="obstacle" aria-hidden="true">💥</div>
       </div>
     `;
     // Remove obstacle after a short duration so it doesn't stay forever
@@ -89,8 +103,31 @@ function startGame() {
   updateTimerUI();
   document.getElementById('end-message').textContent = '';
 
-  // Spawn water cans every second
-  spawnInterval = setInterval(spawnWaterCan, 1000);
+  // Read difficulty and set parameters
+  const difficulty = document.getElementById('difficulty')?.value || 'normal';
+  switch (difficulty) {
+    case 'easy':
+      currentGoal = 15;
+      timeLeft = 40;
+      spawnRate = 1200;
+      obstacleRate = 4000;
+      break;
+    case 'hard':
+      currentGoal = 30;
+      timeLeft = 20;
+      spawnRate = 700;
+      obstacleRate = 2200;
+      break;
+    default:
+      currentGoal = 20;
+      timeLeft = 30;
+      spawnRate = 1000;
+      obstacleRate = 3000;
+  }
+
+  // Spawn water cans and obstacles at rates dependent on difficulty
+  spawnInterval = setInterval(spawnWaterCan, spawnRate);
+  obstacleInterval = setInterval(spawnObstacle, obstacleRate);
 
   // Spawn obstacles occasionally (every 3 seconds)
   obstacleInterval = setInterval(spawnObstacle, 3000);
@@ -120,7 +157,7 @@ function endGame() {
   // Show end-game message based on score
   const messageEl = document.getElementById('end-message');
   let chosenMessage = '';
-  if (currentCans >= 20) {
+  if (currentCans >= currentGoal) {
     chosenMessage = winMessages[Math.floor(Math.random() * winMessages.length)];
     messageEl.classList.remove('lose');
     messageEl.classList.add('win');
@@ -145,12 +182,16 @@ document.querySelector('.game-grid').addEventListener('click', (e) => {
   const gridCell = e.target.closest('.grid-cell');
   if (!gridCell) return; // click outside grid
 
-  const waterCan = e.target.closest('.water-can');
-  const obstacle = e.target.closest('.obstacle');
+  // If the grid cell contains a can anywhere, count it as a hit (easier UX)
+  const waterCan = gridCell.querySelector('.water-can');
+  const obstacle = gridCell.querySelector('.obstacle');
   if (waterCan) {
     // Hit: Increase score and update UI
     currentCans += 1;
     updateScoreUI();
+
+    // Check milestones (fractions of currentGoal)
+    checkAndAnnounceMilestones();
 
     // Add hit feedback to the cell
     gridCell.classList.add('hit');
@@ -159,13 +200,24 @@ document.querySelector('.game-grid').addEventListener('click', (e) => {
     // Remove the can immediately to prevent multiple clicks
     const wrapper = waterCan.closest('.water-can-wrapper');
     if (wrapper) wrapper.remove();
+    // Add to collection UI
+    const collectionGrid = document.getElementById('collection-grid');
+    if (collectionGrid) {
+      const item = document.createElement('div');
+      item.className = 'collection-item';
+      collectionGrid.appendChild(item);
+      // optionally limit the number of visible items
+      if (collectionGrid.children.length > 20) {
+        collectionGrid.removeChild(collectionGrid.children[0]);
+      }
+    }
   } else if (obstacle) {
     // Player clicked an obstacle: apply penalty
     currentCans = Math.max(0, currentCans - 2);
     updateScoreUI();
     gridCell.classList.add('miss');
     setTimeout(() => gridCell.classList.remove('miss'), 300);
-    const wrapper = obstacle.closest('.obstacle-wrapper');
+    const wrapper = gridCell.querySelector('.obstacle-wrapper');
     if (wrapper) wrapper.remove();
   } else {
     // Miss: user clicked an empty cell — provide feedback but do not change score
@@ -190,6 +242,14 @@ if (resetBtn) {
     // clear grid contents
     const cells = document.querySelectorAll('.grid-cell');
     cells.forEach(cell => (cell.innerHTML = ''));
+    // clear collection UI
+    const collectionGrid = document.getElementById('collection-grid');
+    if (collectionGrid) collectionGrid.innerHTML = '';
+  // clear milestone announcements
+  announcedMilestones.clear();
+    // remove confetti if present
+    const confetti = document.querySelectorAll('.confetti-container');
+    confetti.forEach(c => c.remove());
   });
 }
 
@@ -222,4 +282,32 @@ function updateScoreUI() {
 function updateTimerUI() {
   const el = document.getElementById('timer');
   if (el) el.textContent = timeLeft;
+}
+
+// Check milestone thresholds and announce if reached (fractions of currentGoal)
+function checkAndAnnounceMilestones() {
+  if (!currentGoal) return;
+  const fractions = Object.keys(milestoneMessages).map(Number).sort((a,b)=>a-b);
+  for (const f of fractions) {
+    const target = Math.ceil(currentGoal * f);
+    if (currentCans >= target && !announcedMilestones.has(f)) {
+      announcedMilestones.add(f);
+      const msgs = milestoneMessages[f];
+      const msg = msgs[Math.floor(Math.random() * msgs.length)];
+      showAchievement(msg);
+    }
+  }
+}
+
+// Display a short achievement message in the #achievements element
+function showAchievement(text) {
+  const container = document.getElementById('achievements');
+  if (!container) return;
+  container.textContent = text;
+  container.classList.add('visible');
+  setTimeout(() => {
+    container.classList.remove('visible');
+    // clear text after hide transition
+    setTimeout(() => { container.textContent = ''; }, 300);
+  }, 1800);
 }

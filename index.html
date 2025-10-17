@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width">
   <title>Water Quest</title>
   <link href="style.css" rel="stylesheet" type="text/css" />
+  <!-- Use Montserrat (close to charity: water's clean, geometric fonts) -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
@@ -17,15 +19,34 @@
       <p>Cans Collected: <span id="current-cans">0</span></p>
       <p>Time Left: <span id="timer">30</span>s</p>
     </div>
+    <div class="settings">
+      <label for="difficulty">Difficulty:</label>
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="normal" selected>Normal</option>
+        <option value="hard">Hard</option>
+      </select>
+    </div>
   <div id="achievements" class="achievement"></div>
   <!-- End-game message container (hidden until game ends) -->
   <div id="end-message" class="end-message" aria-live="polite"></div>
-    <div class="game-grid"></div>
+    <div class="game-area">
+      <div class="game-grid"></div>
+      <aside class="collection">
+        <h3>Your Collection</h3>
+        <div id="collection-grid" class="collection-grid"></div>
+      </aside>
+    </div>
     <div class="controls">
       <button id="start-game">Start Game</button>
       <button id="reset-game">Reset</button>
     </div>
   </div>
   <script src="script.js"></script>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>Learn more about charity: water — <a href="https://www.charitywater.org" target="_blank" rel="noopener">Home</a> · <a href="https://www.charitywater.org/donate" target="_blank" rel="noopener">Donate</a></p>
+    </div>
+  </footer>
 </body>
 </html>

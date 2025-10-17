@@ -23,7 +23,7 @@ Fonts:
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   margin: 0;
   padding: 30px;
   background-color: #f7fbfd; 
@@ -52,12 +52,66 @@ body {
   display: block;
 }
 
+.settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+#difficulty {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d6e8ff;
+  background: linear-gradient(180deg, #fff, #fcfcff);
+  color: #0b3d91;
+  font-weight: 600;
+}
+
+.game-area {
+  display: flex;
+  gap: 20px;
+  align-items: start;
+}
+
+.collection {
+  width: 160px;
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  text-align: center;
+}
+
+.collection h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #0b3d91;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.collection-item {
+  width: 28px;
+  height: 28px;
+  background-image: url('img/water-can.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.95;
+  border-radius: 4px;
+}
+
 h1 {
   text-align: center;
   font-size: 30px;
   font-weight: bold;
   margin-bottom: 20px;
-  color: #159A48; /* charity: water green for emphasis */
+  color: #FFC907; /* charity: water yellow for main heading */
 }
 
 h1 img {
@@ -79,6 +133,22 @@ h1 img {
   background-color: #f5f5f5;
   padding: 15px 0;
   border-radius: 8px;
+}
+
+#achievements {
+  text-align: center;
+  font-weight: 700;
+  color: #159A48;
+  margin-bottom: 12px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.25s, transform 0.25s;
+  min-height: 22px;
+}
+
+#achievements.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .stats p {
@@ -256,6 +326,7 @@ button:hover {
   justify-content: center;
   font-weight: bold;
   box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+  font-size: 20px; /* make emoji larger */
 }
 
 /* Confetti animation */
